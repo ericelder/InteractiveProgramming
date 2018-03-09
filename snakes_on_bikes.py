@@ -1,6 +1,19 @@
 import pygame
 import time
+import random
 from pygame.locals import *
+
+
+"""
+    TO DO
+    1. Blocks that line up to grid
+    2. Not hardcoded start positions
+    3. Game over screen with score and play again / exit
+    4. Other kinds of pickups
+    5. Bigger window / smaller snakes
+    6. More playable snake speed (slower)
+"""
+
 
 class Snake:
     """
@@ -57,6 +70,11 @@ class Snake:
         for i in range(self.length):
             surf.blit(image,(self.x[i],self.y[i]))
 
+    def grow(self):
+        self.length += 1
+        self.x.append(self.x[-1])
+        self.y.append(self.y[-1])
+
     def update(self):
         """
         This changes position based on direction.
@@ -78,6 +96,23 @@ class Snake:
             self.y[0] += self.speed
 
 
+class Food:
+    """
+    This class represents any of the pickups in the game.
+    """
+    def __init__(self, x, y, size=40):
+        self.x = x
+        self.y = y
+        self.size = size
+
+    def draw(self,surf,image):
+        surf.blit(image,(self.x,self.y))
+
+    def update(self, width, height):
+        self.x = random.randint(0,width - self.size)
+        self.y = random.randint(0,height - self.size)
+
+
 class Game:
     """
     This class is the game window itself, which will contain the snakes.
@@ -86,12 +121,13 @@ class Game:
         self.running = True
         self.display_surf = None
         self.image_surf = None
-        self.windowWidth = 1200
-        self.windowHeight = 900
+        self.window_width = 1600
+        self.window_height = 1200
 
         # Right now there's only one snake, but adding another shouldn't be too hard.
-        self.player1 = Snake(length=5, direction = 'left', x_start=800, y_start=600)
-        self.player2 = Snake(length=5, direction = 'right', x_start=400, y_start=300)
+        self.player1 = Snake(length=3, direction = 'left', x_start=800, y_start=600)
+        self.player2 = Snake(length=3, direction = 'right', x_start=400, y_start=300)
+        self.apple = Food(x=self.window_width/2, y=self.window_height/2)
 
     def play(self):
         """
@@ -100,11 +136,12 @@ class Game:
         """
         pygame.init() #Gets pygame going
         # display_surf and image_surf are also from a pygame tutorial
-        self.display_surf = pygame.display.set_mode((self.windowWidth,self.windowHeight), pygame.HWSURFACE)
+        self.display_surf = pygame.display.set_mode((self.window_width,self.window_height), pygame.HWSURFACE)
         pygame.display.set_caption('Snakes on Bikes in PyGame')
         self.running = True
         self.image_surf1 = pygame.image.load('block.jpg').convert() # If I need to change an icon, do it here
         self.image_surf2 = pygame.image.load('block2.jpg').convert() # There is a separate image_surf for each player
+        self.image_surf3 = pygame.image.load('apple.jpg').convert() # This is for the foods
 
         while self.running:
             pygame.event.pump() # This line is black magic:
@@ -115,6 +152,10 @@ class Game:
                     self.running = False
 
             keys = pygame.key.get_pressed()
+
+            # This is a backup quit method using the escape key
+            if (keys[K_ESCAPE]):
+                self.running = False
 
             #These are all basic key listeners for the arrow keys for player 1
             if (keys[K_RIGHT]):
@@ -146,14 +187,65 @@ class Game:
             #Calls the main function from the Snake class for each player
             self.player1.update()
             self.player2.update()
+
+            # Check if player 1 collides with itself
+            for i in range(1,self.player1.length):
+                    if abs(self.player1.x[0] - self.player1.x[i]) < 40 and abs(self.player1.y[0] - self.player1.y[i]) < 40:
+                        self.running = False
+
+            # Check if player 2 collides with itself
+            for i in range(1,self.player2.length):
+                    if abs(self.player2.x[0] - self.player2.x[i]) < 40 and abs(self.player2.y[0] - self.player2.y[i]) < 40:
+                        self.running = False
+
+            # Check if player 1 collides with player 2
+            for i in range(1,self.player2.length):
+                    if abs(self.player1.x[0] - self.player2.x[i]) < 40 and abs(self.player1.y[0] - self.player2.y[i]) < 40:
+                        self.running = False
+
+            # Check if player 2 collides with player 1
+            for i in range(1,self.player1.length):
+                    if abs(self.player2.x[0] - self.player1.x[i]) < 40 and abs(self.player2.y[0] - self.player1.y[i]) < 40:
+                        self.running = False
+
+            # Player 1 Wall collision
+            if self.player1.x[0] < 0:
+                self.running = False
+            if self.player1.y[0] < 0:
+                self.running = False
+            if self.player1.x[0] > self.window_width:
+                self.running = False
+            if self.player1.y[0] > self.window_height:
+                self.running = False
+
+            #Player 2 Wall collision
+            if self.player2.x[0] < 0:
+                self.running = False
+            if self.player2.y[0] < 0:
+                self.running = False
+            if self.player2.x[0] > self.window_width:
+                self.running = False
+            if self.player2.y[0] > self.window_height:
+                self.running = False
+
+            if abs(self.player1.x[0] - self.apple.x) < 40 and abs(self.player1.y[0] - self.apple.y) < 40:
+                self.player1.grow()
+                self.apple.update(self.window_width,self.window_height)
+            if abs(self.player2.x[0] - self.apple.x) < 40 and abs(self.player2.y[0] - self.apple.y) < 40:
+                self.player2.grow()
+                self.apple.update(self.window_width,self.window_height)
+
+
             self.display_surf.fill((0,0,0)) # Color! Right now its black
             self.player1.draw(self.display_surf, self.image_surf1)
             self.player2.draw(self.display_surf, self.image_surf2)
+            self.apple.draw(self.display_surf, self.image_surf3)
             pygame.display.flip() # This line is also sorcery
             time.sleep(0.1) # Makes the game go human speed instead of computer speed
 
-        pygame.quit() # Once running = false, the program gets here and stops
-
+        #pygame.quit() # Once running = false, the program gets here and stops
+        game1 = Game()
+        game1.play()
 if __name__ == "__main__":
     game = Game()
     game.play()
