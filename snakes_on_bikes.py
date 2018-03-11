@@ -6,8 +6,8 @@ from pygame.locals import *
 
 """
     TO DO
-    1. Blocks that line up to grid
-    2. Not hardcoded start positions
+    1. Blocks that line up to grid --- Written, needs testing
+    2. Not hardcoded start positions --- Written, Tested
     3. Game over screen with score and play again / exit
     4. Other kinds of pickups
     5. Bigger window / smaller snakes
@@ -19,7 +19,7 @@ class Snake:
     """
     This object represents the snake that each player controls.
     """
-    def __init__(self, length=3, speed=50, direction='left',x_start=10,y_start=10):
+    def __init__(self, length=3, speed=40, direction='left',x_start=10,y_start=10):
         """
         The default parameters are as such:
         length = 3 like in classic snake, but I made it longer to demonstrate lack of collision.
@@ -40,6 +40,7 @@ class Snake:
         """
         Initializes the snake as a horizontal row of blocks.
         Since the snake moves one block per lurch, each block is one multiple of speed behind the last.
+        The if statements are so that the tail is pointed out behind the snake.
         """
         if self.direction == 'left':
             for i in range(self.length):
@@ -70,6 +71,11 @@ class Snake:
         for i in range(self.length):
             surf.blit(image,(self.x[i],self.y[i]))
 
+    """
+    This function adds a block to the snake. The new block is at the same location
+    as the tip of the tail, but when the snake next moves it shifts to the correct
+    location. This gives the appearence of the tail freezing for a second.
+    """
     def grow(self):
         self.length += 1
         self.x.append(self.x[-1])
@@ -105,12 +111,18 @@ class Food:
         self.y = y
         self.size = size
 
+    # draw works the same way it does for the snake.
     def draw(self,surf,image):
         surf.blit(image,(self.x,self.y))
 
+    """
+    This moves the block to a new place on the screen.
+    It divides by size, randomizes, then multiplies by size.
+    This is to keep the block at an even space in the grid.
+    """
     def update(self, width, height):
-        self.x = random.randint(0,width - self.size)
-        self.y = random.randint(0,height - self.size)
+        self.x = random.randint(0,(width - self.size)/self.size)*self.size
+        self.y = random.randint(0,(height - self.size)/self.size)*self.size
 
 
 class Game:
@@ -124,9 +136,9 @@ class Game:
         self.window_width = 1600
         self.window_height = 1200
 
-        # Right now there's only one snake, but adding another shouldn't be too hard.
-        self.player1 = Snake(length=3, direction = 'left', x_start=800, y_start=600)
-        self.player2 = Snake(length=3, direction = 'right', x_start=400, y_start=300)
+        # Two snakes and an apple
+        self.player1 = Snake(length=3, direction = 'left', x_start=self.window_width*2/3, y_start=self.window_height*2/3)
+        self.player2 = Snake(length=3, direction = 'right', x_start=self.window_width/3, y_start=self.window_height/3)
         self.apple = Food(x=self.window_width/2, y=self.window_height/2)
 
     def play(self):
