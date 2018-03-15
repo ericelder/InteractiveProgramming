@@ -9,7 +9,7 @@ from pygame.locals import *
     1. Blocks that line up to grid --- Written, needs testing
     2. Not hardcoded start positions --- Written, Tested
     3. Game over screen with score and play again / exit
-    4. Other kinds of pickups
+    4. Other kinds of pickups (If we have extra time)
     5. Bigger window / smaller snakes
     6. More playable snake speed (slower)
 """
@@ -141,6 +141,9 @@ class Game:
         self.player2 = Snake(length=3, direction = 'right', x_start=self.window_width/3, y_start=self.window_height/3)
         self.apple = Food(x=self.window_width/2, y=self.window_height/2)
 
+        # Initializing this now, but it doesn't get a real value until someone wins.
+        self.winner = 0
+
     def play(self):
         """
         This entire class just has one function outsied of init.
@@ -149,25 +152,26 @@ class Game:
         pygame.init() #Gets pygame going
         # display_surf and image_surf are also from a pygame tutorial
         self.display_surf = pygame.display.set_mode((self.window_width,self.window_height), pygame.HWSURFACE)
-        pygame.display.set_caption('Snakes on Bikes in PyGame')
         self.running = True
         self.image_surf1 = pygame.image.load('block.jpg').convert() # If I need to change an icon, do it here
         self.image_surf2 = pygame.image.load('block2.jpg').convert() # There is a separate image_surf for each player
         self.image_surf3 = pygame.image.load('apple.jpg').convert() # This is for the foods
 
         while self.running:
-            pygame.event.pump() # This line is black magic:
+            pygame.event.pump() # This line is sorcery:
 
             # This listens for the exit button
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
+                    pygame.quit()
 
             keys = pygame.key.get_pressed()
 
             # This is a backup quit method using the escape key
             if (keys[K_ESCAPE]):
                 self.running = False
+                pygame.quit()
 
             #These are all basic key listeners for the arrow keys for player 1
             if (keys[K_RIGHT]):
@@ -204,41 +208,53 @@ class Game:
             for i in range(1,self.player1.length):
                     if abs(self.player1.x[0] - self.player1.x[i]) < 40 and abs(self.player1.y[0] - self.player1.y[i]) < 40:
                         self.running = False
+                        self.winner = 2
 
             # Check if player 2 collides with itself
             for i in range(1,self.player2.length):
                     if abs(self.player2.x[0] - self.player2.x[i]) < 40 and abs(self.player2.y[0] - self.player2.y[i]) < 40:
                         self.running = False
+                        self.winner = 1
 
             # Check if player 1 collides with player 2
             for i in range(1,self.player2.length):
                     if abs(self.player1.x[0] - self.player2.x[i]) < 40 and abs(self.player1.y[0] - self.player2.y[i]) < 40:
                         self.running = False
+                        self.winner = 2
 
             # Check if player 2 collides with player 1
             for i in range(1,self.player1.length):
                     if abs(self.player2.x[0] - self.player1.x[i]) < 40 and abs(self.player2.y[0] - self.player1.y[i]) < 40:
                         self.running = False
+                        self.winner = 1
 
             # Player 1 Wall collision
             if self.player1.x[0] < 0:
                 self.running = False
+                self.winner = 2
             if self.player1.y[0] < 0:
                 self.running = False
+                self.winner = 2
             if self.player1.x[0] > self.window_width:
                 self.running = False
+                self.winner = 2
             if self.player1.y[0] > self.window_height:
                 self.running = False
+                self.winner = 2
 
             #Player 2 Wall collision
             if self.player2.x[0] < 0:
                 self.running = False
+                self.winner = 1
             if self.player2.y[0] < 0:
                 self.running = False
+                self.winner = 1
             if self.player2.x[0] > self.window_width:
                 self.running = False
+                self.winner = 1
             if self.player2.y[0] > self.window_height:
                 self.running = False
+                self.winner = 1
 
             if abs(self.player1.x[0] - self.apple.x) < 40 and abs(self.player1.y[0] - self.apple.y) < 40:
                 self.player1.grow()
@@ -255,9 +271,50 @@ class Game:
             pygame.display.flip() # This line is also sorcery
             time.sleep(0.1) # Makes the game go human speed instead of computer speed
 
-        #pygame.quit() # Once running = false, the program gets here and stops
-        game1 = Game()
-        game1.play()
+        # pygame.quit() # Once running = false, the program gets here and stops
+
+        """
+        This section pulls up the scores which give the option to play again.
+        """
+
+        # Currently having some trouble with this text display part
+        pygame.font.init()
+        font1 = pygame.font.SysFont('Arial',30)
+        final_scores = 'PLAYER {} WON!\n\nPLAYER 1 LENGTH: {} BLOCKS\nPLAYER 2 LENGTH: {} BLOCKS\n\nPRESS P TO PLAY AGAIN, X TO QUIT\nNEW GAME IN 10 SECONDS...'.format(self.winner,self.player1.length,self.player2.length)
+        print(final_scores) # Temporary until the actual thing works.
+        text_surf = font1.render(final_scores,False,(255,255,255))
+
+        # This part checks if the players want to play again or exit the game.
+        for clock in range(100):
+            # With 100 increments of time.sleep(0.1), this screen should stay up for 10 seconds.
+
+            pygame.event.pump()
+
+            # The code to quit is the same as in the loop above.
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+
+            keys = pygame.key.get_pressed()
+
+            # If they want to play another game, we simply call game again, overwriting the first version.
+            if (keys[K_p]):
+                game = Game()
+                game.play()
+
+            # If they want to exit the game.
+            if (keys[K_x]):
+                pygame.quit()
+
+            # There might be a better way to keep this on the screen, but this works.
+            time.sleep(0.1)
+
+            # This should be writing white text on a black background, but it isn't.
+            self.display_surf.fill((0,0,0))
+            self.display_surf.blit(text_surf,(0,0))
+
+        pygame.display.flip()
+
 if __name__ == "__main__":
     game = Game()
     game.play()
