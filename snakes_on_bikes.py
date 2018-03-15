@@ -6,9 +6,9 @@ from pygame.locals import *
 
 """
     TO DO
-    1. Blocks that line up to grid --- Written, needs testing
-    2. Not hardcoded start positions --- Written, Tested
-    3. Game over screen with score and play again / exit
+    1. Blocks that line up to grid --- Done
+    2. Not hardcoded start positions --- Done
+    3. Game over screen with score and play again / exit --- Done
     4. Other kinds of pickups (If we have extra time)
     5. Bigger window / smaller snakes
     6. More playable snake speed (slower)
@@ -55,16 +55,20 @@ class Snake:
     # These functions set direction when called
     # I thought about making direction an object, but it really only needs one piece of information
     def move_right(self):
-        self.direction = 'right'
+        if self.direction != 'left':
+            self.direction = 'right'
 
     def move_left(self):
-        self.direction ='left'
+        if self.direction != 'right':
+            self.direction ='left'
 
     def move_up(self):
-        self.direction = 'up'
+        if self.direction != 'down':
+            self.direction = 'up'
 
     def move_down(self):
-        self.direction = 'down'
+        if self.direction != 'up':
+            self.direction = 'down'
 
     # surf.blit is taken from a pygame tutorial
     def draw(self,surf,image):
@@ -133,8 +137,8 @@ class Game:
         self.running = True
         self.display_surf = None
         self.image_surf = None
-        self.window_width = 1600
-        self.window_height = 1200
+        self.window_width = 1200
+        self.window_height = 900
 
         # Two snakes and an apple
         self.player1 = Snake(length=3, direction = 'left', x_start=self.window_width*2/3, y_start=self.window_height*2/3)
@@ -146,7 +150,7 @@ class Game:
 
     def play(self):
         """
-        This entire class just has one function outsied of init.
+        This entire class just has one function outside of init.
         This is the function that makes the game do the thing.
         """
         pygame.init() #Gets pygame going
@@ -292,17 +296,12 @@ class Game:
         text_surf_p2 = font1.render(p2_message,False,(255,255,255))
         text_surf_o = font1.render(option_message,False,(255,255,255))
 
-        # This does the rectangle for each line so that they stack nicely.
-        text_rect_w = text_surf_w.get_rect(center = (self.window_width/2,self.window_height/4))
-        text_rect_p1 = text_surf_p1.get_rect(bottom = (self.window_width/2,self.window_height/2))
-        text_rect_p2 = text_surf_p2.get_rect(top = (self.window_width/2,self.window_height/2))
-        text_rect_o = text_surf_o.get_rect(center = (self.window_width/2,self.window_height*(3/4)))
 
         # This displays the text on the existing screen, right over the snakes.
-        self.display_surf.blit(text_surf_w,text_rect_w)
-        self.display_surf.blit(text_surf_p1,text_rect_p1)
-        self.display_surf.blit(text_surf_p2,text_rect_p2)
-        self.display_surf.blit(text_surf_o,text_rect_o)
+        self.display_surf.blit(text_surf_w,(self.window_width/2-text_surf_w.get_width()/2, self.window_height/4-text_surf_w.get_height()/2))
+        self.display_surf.blit(text_surf_p1,(self.window_width/2-text_surf_p1.get_width()/2, self.window_height/2-text_surf_p1.get_height()))
+        self.display_surf.blit(text_surf_p2,(self.window_width/2-text_surf_p1.get_width()/2, self.window_height/2))
+        self.display_surf.blit(text_surf_o,(self.window_width/2-text_surf_o.get_width()/2,self.window_height*3/4-text_surf_o.get_height()/2))
 
         # This part checks if the players want to play again or exit the game.
         for clock in range(600):
