@@ -278,14 +278,34 @@ class Game:
         """
 
         # Currently having some trouble with this text display part
-        pygame.font.init()
         font1 = pygame.font.SysFont('Arial',30)
-        final_scores = 'PLAYER {} WON!\n\nPLAYER 1 LENGTH: {} BLOCKS\nPLAYER 2 LENGTH: {} BLOCKS\n\nPRESS P TO PLAY AGAIN, X TO QUIT\nNEW GAME IN 10 SECONDS...'.format(self.winner,self.player1.length,self.player2.length)
-        print(final_scores) # Temporary until the actual thing works.
-        text_surf = font1.render(final_scores,False,(255,255,255))
+
+        # These have to be separate strings because \n doesn't work with blit.
+        winner_message = 'PLAYER {} WON!'.format(self.winner)
+        p1_message = 'PLAYER 1 LENGTH: {} BLOCKS'.format(self.player1.length)
+        p2_message = 'PLAYER 2 LENGTH: {} BLOCKS'.format(self.player2.length)
+        option_message = 'PRESS P TO PLAY AGAIN, X TO QUIT'
+
+        # This puts each line of text into its own surface.
+        text_surf_w = font1.render(winner_message,False,(255,255,255))
+        text_surf_p1 = font1.render(p1_message,False,(255,255,255))
+        text_surf_p2 = font1.render(p2_message,False,(255,255,255))
+        text_surf_o = font1.render(option_message,False,(255,255,255))
+
+        # This does the rectangle for each line so that they stack nicely.
+        text_rect_w = text_surf_w.get_rect(center = (self.window_width/2,self.window_height/4))
+        text_rect_p1 = text_surf_p1.get_rect(bottom = (self.window_width/2,self.window_height/2))
+        text_rect_p2 = text_surf_p2.get_rect(top = (self.window_width/2,self.window_height/2))
+        text_rect_o = text_surf_o.get_rect(center = (self.window_width/2,self.window_height*(3/4)))
+
+        # This displays the text on the existing screen, right over the snakes.
+        self.display_surf.blit(text_surf_w,text_rect_w)
+        self.display_surf.blit(text_surf_p1,text_rect_p1)
+        self.display_surf.blit(text_surf_p2,text_rect_p2)
+        self.display_surf.blit(text_surf_o,text_rect_o)
 
         # This part checks if the players want to play again or exit the game.
-        for clock in range(100):
+        for clock in range(600):
             # With 100 increments of time.sleep(0.1), this screen should stay up for 10 seconds.
 
             pygame.event.pump()
@@ -309,11 +329,10 @@ class Game:
             # There might be a better way to keep this on the screen, but this works.
             time.sleep(0.1)
 
-            # This should be writing white text on a black background, but it isn't.
-            self.display_surf.fill((0,0,0))
-            self.display_surf.blit(text_surf,(0,0))
+            pygame.display.flip()
 
-        pygame.display.flip()
+        # If they don't pick anythin for a minute, meaning they probably left the game open
+        pygame.quit()
 
 if __name__ == "__main__":
     game = Game()
