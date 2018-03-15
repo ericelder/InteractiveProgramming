@@ -10,8 +10,8 @@ from pygame.locals import *
     2. Not hardcoded start positions --- Done
     3. Game over screen with score and play again / exit --- Done
     4. Other kinds of pickups (If we have extra time)
-    5. Bigger window / smaller snakes
-    6. More playable snake speed (slower)
+    5. Bigger window / smaller snakes --- Bigger window
+    6. More playable snake speed (slower) --- Tried, slower turns out to be less fun
 """
 
 
@@ -19,7 +19,7 @@ class Snake:
     """
     This object represents the snake that each player controls.
     """
-    def __init__(self, length=3, speed=40, direction='left',x_start=10,y_start=10):
+    def __init__(self, length=3, speed=20, direction='left',x_start=10,y_start=10):
         """
         The default parameters are as such:
         length = 3 like in classic snake, but I made it longer to demonstrate lack of collision.
@@ -110,7 +110,7 @@ class Food:
     """
     This class represents any of the pickups in the game.
     """
-    def __init__(self, x, y, size=40):
+    def __init__(self, x, y, size=20):
         self.x = x
         self.y = y
         self.size = size
@@ -137,13 +137,18 @@ class Game:
         self.running = True
         self.display_surf = None
         self.image_surf = None
-        self.window_width = 1200
-        self.window_height = 900
+        self.window_width = 1600
+        self.window_height = 1000
+
+        # This is the only place where this value needs to be changed in order to make the snake bigger or smaller
+        self.block_size = 20
 
         # Two snakes and an apple
-        self.player1 = Snake(length=3, direction = 'left', x_start=self.window_width*2/3, y_start=self.window_height*2/3)
-        self.player2 = Snake(length=3, direction = 'right', x_start=self.window_width/3, y_start=self.window_height/3)
-        self.apple = Food(x=self.window_width/2, y=self.window_height/2)
+        self.player1 = Snake(length=5, direction = 'left', speed = self.block_size, x_start=self.window_width*2/3, y_start=self.window_height*2/3)
+        self.player2 = Snake(length=5, direction = 'right', speed = self.block_size, x_start=self.window_width/3, y_start=self.window_height/3)
+        self.apple1 = Food(x=self.window_width/2, y=self.window_height/2)
+        self.apple2 = Food(x=self.window_width/4, y=self.window_height/2)
+        self.apple3 = Food(x=self.window_width*3/4, y=self.window_height/2)
 
         # Initializing this now, but it doesn't get a real value until someone wins.
         self.winner = 0
@@ -157,9 +162,9 @@ class Game:
         # display_surf and image_surf are also from a pygame tutorial
         self.display_surf = pygame.display.set_mode((self.window_width,self.window_height), pygame.HWSURFACE)
         self.running = True
-        self.image_surf1 = pygame.image.load('block.jpg').convert() # If I need to change an icon, do it here
-        self.image_surf2 = pygame.image.load('block2.jpg').convert() # There is a separate image_surf for each player
-        self.image_surf3 = pygame.image.load('apple.jpg').convert() # This is for the foods
+        self.image_surf1 = pygame.image.load('blocksmall.jpg').convert() # If I need to change an icon, do it here
+        self.image_surf2 = pygame.image.load('block2small.jpg').convert() # There is a separate image_surf for each player
+        self.image_surf3 = pygame.image.load('applesmall.jpg').convert() # This is for the foods
 
         while self.running:
             pygame.event.pump() # This line is sorcery:
@@ -210,25 +215,25 @@ class Game:
 
             # Check if player 1 collides with itself
             for i in range(1,self.player1.length):
-                    if abs(self.player1.x[0] - self.player1.x[i]) < 40 and abs(self.player1.y[0] - self.player1.y[i]) < 40:
+                    if abs(self.player1.x[0] - self.player1.x[i]) < self.block_size and abs(self.player1.y[0] - self.player1.y[i]) < self.block_size:
                         self.running = False
                         self.winner = 2
 
             # Check if player 2 collides with itself
             for i in range(1,self.player2.length):
-                    if abs(self.player2.x[0] - self.player2.x[i]) < 40 and abs(self.player2.y[0] - self.player2.y[i]) < 40:
+                    if abs(self.player2.x[0] - self.player2.x[i]) < self.block_size and abs(self.player2.y[0] - self.player2.y[i]) < self.block_size:
                         self.running = False
                         self.winner = 1
 
             # Check if player 1 collides with player 2
             for i in range(1,self.player2.length):
-                    if abs(self.player1.x[0] - self.player2.x[i]) < 40 and abs(self.player1.y[0] - self.player2.y[i]) < 40:
+                    if abs(self.player1.x[0] - self.player2.x[i]) < self.block_size and abs(self.player1.y[0] - self.player2.y[i]) < self.block_size:
                         self.running = False
                         self.winner = 2
 
             # Check if player 2 collides with player 1
             for i in range(1,self.player1.length):
-                    if abs(self.player2.x[0] - self.player1.x[i]) < 40 and abs(self.player2.y[0] - self.player1.y[i]) < 40:
+                    if abs(self.player2.x[0] - self.player1.x[i]) < self.block_size and abs(self.player2.y[0] - self.player1.y[i]) < self.block_size:
                         self.running = False
                         self.winner = 1
 
@@ -260,20 +265,36 @@ class Game:
                 self.running = False
                 self.winner = 1
 
-            if abs(self.player1.x[0] - self.apple.x) < 40 and abs(self.player1.y[0] - self.apple.y) < 40:
+            if abs(self.player1.x[0] - self.apple1.x) < self.block_size and abs(self.player1.y[0] - self.apple1.y) < self.block_size:
                 self.player1.grow()
-                self.apple.update(self.window_width,self.window_height)
-            if abs(self.player2.x[0] - self.apple.x) < 40 and abs(self.player2.y[0] - self.apple.y) < 40:
+                self.apple1.update(self.window_width,self.window_height)
+            if abs(self.player2.x[0] - self.apple1.x) < self.block_size and abs(self.player2.y[0] - self.apple1.y) < self.block_size:
                 self.player2.grow()
-                self.apple.update(self.window_width,self.window_height)
+                self.apple1.update(self.window_width,self.window_height)
+
+            if abs(self.player1.x[0] - self.apple2.x) < self.block_size and abs(self.player1.y[0] - self.apple2.y) < self.block_size:
+                self.player1.grow()
+                self.apple2.update(self.window_width,self.window_height)
+            if abs(self.player2.x[0] - self.apple2.x) < self.block_size and abs(self.player2.y[0] - self.apple2.y) < self.block_size:
+                self.player2.grow()
+                self.apple2.update(self.window_width,self.window_height)
+
+            if abs(self.player1.x[0] - self.apple3.x) < self.block_size and abs(self.player1.y[0] - self.apple3.y) < self.block_size:
+                self.player1.grow()
+                self.apple3.update(self.window_width,self.window_height)
+            if abs(self.player2.x[0] - self.apple3.x) < self.block_size and abs(self.player2.y[0] - self.apple3.y) < self.block_size:
+                self.player2.grow()
+                self.apple3.update(self.window_width,self.window_height)
 
 
             self.display_surf.fill((0,0,0)) # Color! Right now its black
             self.player1.draw(self.display_surf, self.image_surf1)
             self.player2.draw(self.display_surf, self.image_surf2)
-            self.apple.draw(self.display_surf, self.image_surf3)
+            self.apple1.draw(self.display_surf, self.image_surf3)
+            self.apple2.draw(self.display_surf, self.image_surf3)
+            self.apple3.draw(self.display_surf, self.image_surf3)
             pygame.display.flip() # This line is also sorcery
-            time.sleep(0.1) # Makes the game go human speed instead of computer speed
+            time.sleep(0.05) # Makes the game go human speed instead of computer speed
 
         # pygame.quit() # Once running = false, the program gets here and stops
 
