@@ -15,3 +15,6 @@ snakes_on_bikes.py
 
 Open the command line, navigate to the directory with the files, and type the following:
 $ python snakes_on_bikes.py
+
+Here is the link to our Project Reflection:
+https://github.com/ericelder/InteractiveProgramming/blob/master/Project%204%20write-up.pdf
